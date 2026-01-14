@@ -5,30 +5,12 @@ EventHub is a professional web-based platform built with PHP and MySQL. This doc
 ---
 
 ## 🏗️ Project Architecture & Design Philosophy
-The system follows a **Modular Design**, separating administrative logic from the public-facing portal.
 
-### Folder Structure
-* **`admin/`**: Houses all CRUD operations and the restricted dashboard.
-* **`includes/`**: Contains core system files like `db.php` (The Database Bridge).
-* **`assets/`**: Contains styling (CSS) and static media (Images).
-* **`index.php`**: The public landing page and entry point.
-
----
-
-## 🛠️ Tech Stack Glossary
-For those new to the stack, here is the role of each technology:
-- **XAMPP**: The local server environment used for development.
-- **Apache**: The web server that "serves" the PHP files to the browser.
-- **MySQL**: The relational database used to store events and user data.
-- **PHP 8.1+**: The server-side language used for business logic and database communication.
-
----
+The system follows a **Modular Design**, separating administrative logic from the public-facing portal. We organized files based on their role to ensure maintainability and security.
 
 ### Visual Folder Structure
 
-Here is a diagram of the project organization:
-
-```plaintext
+```
 event_mgt_system/
 │
 ├── admin/                  # Backend Management Area (Restricted access)
@@ -53,56 +35,64 @@ event_mgt_system/
 ├── register.php            # Public Registration Page for users
 ├── README.md               # Project Documentation
 └── success.php             # Registration confirmation page
-
 ```
 
-## 🧠 Core Logic Breakdown
+🛠️ Tech Stack Glossary
+ * XAMPP: The local server environment used for development.
+ * Apache: The web server that "serves" the PHP files to the browser.
+ * MySQL: The relational database used to store events and user data.
+ * PHP 8.1+: The server-side language used for business logic.
 
-### 1. Dynamic Search Logic
-The search functionality uses the SQL **`LIKE`** operator combined with **`%`** wildcards.
-- **Implementation**: `SELECT * FROM events WHERE title LIKE '%keyword%'`
-- **Why?**: This allows for "partial matching," meaning if a user searches for "Lagos," the system will find any event containing that word anywhere in its title.
+🧠 Core Logic Breakdown (The How & The Why)
+1. Dynamic Search Logic
+ * How it works: The index.php page takes the user's text input from a form using the GET method. PHP then inserts this text into a SQL query using the LIKE operator and % wildcards.
+ * Why we did it: This allows "partial matching." If a user searches for "Lagos," the system will find "Lagos Island" or "Lekki Lagos." It makes the search flexible and user-friendly.
+2. The CRUD System (Admin Operations)
+Create (create_event.php)
+ * How: It collects data from an HTML form and executes an INSERT INTO SQL command to add a new row to the events table.
+ * Why: This allows the admin to expand the site content dynamically without touching the database manually.
+Read (dashboard.php)
+ * How: It runs SELECT queries to fetch all records. It also uses the COUNT() function to show total statistics on the dashboard.
+ * Why: To give the admin a bird's-eye view of the system’s current state in real-time.
+Update (edit_event.php)
+ * How: It grabs a specific event's details using an ID from the URL (?id=X), populates an "Edit Form," and then runs an UPDATE SQL command when the admin saves changes.
+ * Why: This ensures data accuracy. The ID prevents the system from accidentally updating the wrong event.
+Delete (delete_event.php)
+ * How: When the delete button is clicked, it sends the Event ID to this script. The script runs DELETE FROM events WHERE id = X and then uses header("Location: dashboard.php") to redirect the user instantly.
+ * Why: This makes the management process fast and seamless. The redirect ensures the admin never sees a blank "processing" page.
+3. Security: Admin Approval Workflow
+ * How: Every admin account has a column called is_approved. When login.php runs, it checks if password == true AND is_approved == 1.
+ * Why: This acts as a Boolean Gate. It ensures that even if someone registers a staff account, they have zero access until a "Super Admin" manually verifies them.
+
+🛡️ Security Implementation
+ * XSS Protection: We wrap output in htmlspecialchars(). How? It converts symbols like < to text so the browser doesn't execute them as code. Why? To prevent hackers from injecting malicious scripts.
+ * SQL Injection Prevention: How? By using mysqli_real_escape_string or Prepared Statements. Why? To stop users from typing SQL commands into form fields to delete your whole database.
+ * Session Security: How? We use session_start() and check for a user_id at the top of every admin file. Why? This prevents unauthorized users from bypassing the login page by simply typing the URL.
 
 
+🚀 How to Run the Project
+ * Move the folder to C:\xampp\htdocs\event_mgt_system.
+ * Start Apache and MySQL in XAMPP.
+ * Import database.sql into phpMyAdmin.
+ * Visit http://localhost/event_mgt_system in your browser.
+<!-- end list -->
 
-### 2. The CRUD System
-The Administrative Suite is built on the **CRUD** (Create, Read, Update, Delete) principle:
-- **Create (`create_event.php`)**: Captures form data and uses `INSERT INTO` to add records.
-- **Read (`dashboard.php`)**: Fetches statistics and event lists using `SELECT` queries.
-- **Update (`edit_event.php`)**: Uses a unique **ID** passed via the URL to target and modify specific rows.
-- **Delete (`delete_event.php`)**: A background script that removes records using the `DELETE` command and redirects the admin instantly.
-
-### 3. Security: Admin Approval Workflow
-To prevent unauthorized access, we implemented a **Boolean Gate**:
-1.  **Status 0**: New admins are created with `is_approved = 0`. They cannot log in.
-2.  **Status 1**: An existing admin must manually approve the account via the dashboard.
-- **Benefit**: This ensures that even if someone finds the registration link, they cannot access sensitive data without manual verification.
+### Presentation Tip for Tomorrow:
+When the lecturer asks, **"How does the delete function work?"**, you can now point to the README and say: *"It grabs the ID from the URL, runs the SQL delete command in the background, and then uses a PHP header redirect to bring the admin back to the dashboard instantly so the workflow is never interrupted."*
 
 ---
 
-## 📄 Key File Functions
+## 🏁 Conclusion & Future Scope
 
-| File | Role |
-| :--- | :--- |
-| `includes/db.php` | Manages the connection between PHP and MySQL. Used in every file. |
-| `index.php` | Displays events to the public and handles the search filter. |
-| `register.php` | Captures attendee information and links it to an Event ID. |
-| `admin/login.php` | Authenticates users and starts a secure **Session**. |
-| `admin/dashboard.php` | Central hub for system statistics and admin management. |
+### **Project Summary**
+EventHub successfully fulfills the requirements of a robust Event Management System. By implementing a **Modular Architecture** and a secure **Admin Approval Workflow**, the platform ensures that event discovery is seamless for the public while remaining highly secure and manageable for administrators. The integration of **CRUD operations** and **Dynamic Search** logic provides a professional-grade user experience.
 
-
-
----
-
-## 🛡️ Security Implementation
-- **XSS Protection**: Every piece of data displayed to the user is wrapped in `htmlspecialchars()` to prevent malicious scripts from running.
-- **SQL Injection Prevention**: We used **Prepared Statements** (or sanitization) to ensure user inputs cannot manipulate our SQL queries.
-- **Session Security**: `session_start()` is used to protect the `admin/` directory. If no session exists, the user is redirected to the login page.
+### **Future Enhancements**
+While the current version is fully functional for CSC-203 requirements, the system is designed to be scalable. Future updates could include:
+* **Image Uploads**: Allowing admins to upload event banners directly through the dashboard.
+* **Email Notifications**: Automated confirmation emails to users upon successful registration.
+* **Password Hashing**: Upgrading security by using `password_hash()` for industry-standard data protection.
+* **Payment Integration**: Adding a gateway (like Paystack or Flutterwave) for ticket sales.
 
 ---
-
-## 🚀 How to Run the Project
-1.  Move the folder to `C:\xampp\htdocs\event_mgt_system`.
-2.  Start **Apache** and **MySQL** in XAMPP.
-3.  Import `database.sql` into **phpMyAdmin**.
-4.  Visit `http://localhost/event_mgt_system` in your browser.
+**Developed by Group 18** *CSC-203: Web Programming Project - 2026*
